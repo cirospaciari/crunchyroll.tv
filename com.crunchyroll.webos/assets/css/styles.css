@@ -1,0 +1,202 @@
+html, body{
+    margin: 0;
+    border: 0;
+    padding: 0;
+    background-color: black
+}
+
+.hidden{
+    display: none !important;
+}
+
+#splash{
+    background: url(../img/crunchyroll.png) no-repeat center center;
+    background-color: #f78b24;
+    width: 100vw;
+    height: 100vh;
+    transition: background 0.25s;
+    position: absolute;
+    top: 0;
+    left: 0;
+    max-width: 100vw;
+    max-height: 100vh;
+    overflow: hidden;
+    z-index: 99;
+}
+#splash.with-login{
+    background-position: top center;
+    background-size: 320px 320px;
+}
+
+#login {
+    width: 100vw;
+    text-align: center;
+    position: relative;
+    top: 300px;
+    display: none;
+    border-width: 3px;
+}
+
+#login button:focus {
+    border-color: #f78b24;
+}
+#splash.with-login #login{
+    display: block;
+}
+#login input, #login select {
+    width: 290px;
+    height: 40px;
+    padding-left: 10px;
+    margin-bottom: 10px;
+}
+#login select {
+    width: 305px;
+    background: white;
+}
+#login button{
+    width: 305px;
+    height: 40px;
+    background: white;
+    color: #f78b24;
+    font-weight: bolder;
+    border-style: dotted;
+}
+#menu{
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: rgba(0,0,0, 0.7);
+}
+#menu #episodes {
+    display: inline-block;
+    width: 30vw;
+    overflow: hidden;
+    height: 100vh;
+    float: left;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    vertical-align: top;
+    position: relative;
+}
+#menu #episodes > .title{
+    color: white;
+    font-size: 38px;
+    position: absolute;
+    top: 10px;
+    left: 15px;
+    width: calc(100% - 30px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#menu #episodes .wrapper{
+    height: calc(100% - 80px);
+    width: 100%;
+    vertical-align: top;
+    display: inline-block;
+    overflow: hidden;
+    margin: 80px 0px;
+    margin-bottom: 0px;
+}
+#menu #episodes .wrapper .thumb {
+    width: calc(100% - 34px);
+    height: calc(20% - 34px);
+    display: block;
+    margin: 15px;
+    border: 2px solid transparent;
+}
+#menu #episodes .wrapper .thumb:nth-child(1) {
+    width: calc(100% - 34px);
+    height: calc(20% - 19px);
+    margin-top: 0;
+ }
+#menu #episodes .wrapper .thumb:hover,
+#menu #episodes .wrapper .thumb.selected{
+    border: 2px solid white;
+}
+#menu #episodes .wrapper .thumb > div {
+    position: relative;
+    display: inline-block;
+    width: 50%;
+    height: 100%;
+    vertical-align: top;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    color: white;
+    font-family: "Helvetica Neue", Helvetica, Arial;
+}
+#menu #episodes .wrapper .thumb > div img{
+    width: 100%;
+    height: 100%;
+}
+#menu #episodes .wrapper .thumb > div .title, 
+#menu #episodes .wrapper .thumb > div .episode,
+#menu #episodes .wrapper .thumb > div .description {
+    font-weight: bold;
+    display: block;
+    margin: 5px;
+}
+#menu #episodes .wrapper .thumb > div .episode{
+    font-size: small;
+}
+#menu #episodes .wrapper .thumb > div .description{
+    font-size: 10px;
+    display: none;
+}
+
+#menu #series {
+    display: inline-block;
+    width: 70vw;
+    overflow: hidden;
+    height: 100vh;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    vertical-align: top;
+}
+#menu #series > .title{
+    color: white;
+    font-size: 38px;
+    position: absolute;
+    top: 10px;
+}
+#menu #series .wrapper{
+    height: calc(100% - 160px);
+    width: calc(100% - 80px);
+    padding: 80px;
+    padding-left: 0px;
+}
+#menu #series .wrapper .thumb {
+    display: inline-block;
+    width: calc(25% - 4px);
+    height: calc(20% - 4px);
+    position: relative;
+    vertical-align: top;
+    border: 2px solid transparent;
+}
+#menu #series .wrapper .thumb:hover,
+#menu #series .wrapper .thumb.selected{
+    border: 2px solid white;
+}
+#menu #series .wrapper .thumb img {
+    width: 100%;
+    height: 100%;
+}
+
+#menu #series .wrapper .thumb span{
+    position: absolute;
+    z-index: 2;
+    text-align: center;
+    width: 100%;
+    color: white;
+    font-weight: bold;
+    font-family: "Helvetica Neue", Helvetica, Arial;
+    left: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.7);
+    height: 40px;
+    line-height: 40px;
+}
+

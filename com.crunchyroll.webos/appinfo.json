@@ -1,0 +1,10 @@
+{
+  "id": "com.crunchyroll.webos",
+  "version": "0.0.1",
+  "vendor": "Ciro Spaciari",
+  "type": "web",
+  "main": "index.html",
+  "title": "Crunchyroll",
+  "icon": "icon.png",
+  "largeIcon": "largeIcon.png"
+}

@@ -1,0 +1,9 @@
+http://webostv.developer.lge.com/sdk/tools/using-webos-tv-cli/?wos_flag=ares-launch#ares-launch
+
+ares-install -s internal --device tv com.crunchyroll.webos_0.0.1_all.ipk
+ares-launch --device tv com.crunchyroll.webos
+ares-inspect --device tv --app com.crunchyroll.webos
+
+
+
+ares-package com.crunchyroll.webos

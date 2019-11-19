@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <title>Crunchyroll TV</title>
+    <link href="https://vjs.zencdn.net/7.4.1/video-js.css" rel="stylesheet">
+    <link href="./assets/css/styles.css" rel="stylesheet">
+    
+    
+    <script src="https://vjs.zencdn.net/ie8/1.1.2/videojs-ie8.min.js"></script>
+    <script src='https://vjs.zencdn.net/7.4.1/video.js'></script>
+    <script src='./assets/js/crunchyroll.js'></script>
+    
+</head>
+
+<body>
+
+    
+    <!-- https://docs.videojs.com/docs/api/player.html -->
+    <video id="video" class='video-js' controls preload='auto' style="width:100vw;height:100vh;"></video>
+    <div id="menu">
+        <div id="episodes">
+            <div class="title"></div>
+            <div class="wrapper"></div>
+        </div>
+        <div id="series">
+            <div class="title"></div>
+            <div class="wrapper"></div>
+        </div>
+    </div>
+    <div id="splash">
+        <div id="login">
+            <input id="login_email" type="text" placeholder="E-mail"><br/>
+            <input id="login_password" type="password" placeholder="Password"><br/>
+            <select id="login_locale">
+                <option value="enUS">English (US)</option>
+                <option value="enGB">English (UK)</option>
+                <option value="esLA">Español</option>
+                <option value="esES">Español (España)</option>
+                <option value="ptBR">Português (Brasil)</option>
+                <option value="ptPT">Português (Portugal)</option>
+                <option value="frFR">Français (France)</option>
+                <option value="deDE">Deutsch</option>
+                <option value="itIT">Italiano</option>
+                <option value="ruRU">Русский</option>
+                <option value="arME">العربية</option>
+            </select><br/>
+
+            <button id="login_button">Login</button>   
+        </div>
+    </div>
+
+    <script src='./assets/js/app.js'></script>
+</body>
