@@ -15,9 +15,43 @@ var key = {
 
 function App() {
     var self = this;
-    var menuIsShowing = false;
+    var menuIsShowing = true;
     var loadingData = false;
     var cr = null;
+
+    var menu_tab_list = {
+        selected: 0,
+        up: function () {
+            menu_tab_list.select(menu_tab_list.selected - 1);
+        },
+        down: function () {
+            menu_tab_list.select(menu_tab_list.selected + 1);
+        },
+        select: function(index){
+            if(index < 0 || index > 1 || menu_tab_list.selected == index){
+                return;
+            }
+        
+            var list = Array.prototype.slice.apply(document.querySelector("#menu #tabs").children);
+            for (var i = 0; i < list.length; i++) {
+                list[i].classList.remove("selected");
+                if(i == index){
+                    list[i].classList.add("selected");
+                }
+            }
+            menu_tab_list.selected = index;
+            loadingData = true;
+            if(index === 0){
+                Promise.all([self.listLastUpdated(), self.listPopular()]).then(function(){
+                    loadingData = false;
+                });
+            }else{
+                self.listHistory().then(function(){
+                    loadingData = false;
+                });
+            }
+        }
+    }
     var menu_left_list = {
         selected: -1,
         items: [],
@@ -312,14 +346,22 @@ function App() {
         switch (keyCode) {
             case key.UP:
                 if (menu_right_list.selected == -1) {
-                    menu_left_list.up();
+                    if(menu_left_list.selected == -1){
+                        menu_tab_list.up();
+                    }else{
+                        menu_left_list.up();
+                    }
                 } else {
                     menu_right_list.up();
                 }
                 break;
             case key.DOWN:
                 if (menu_right_list.selected == -1) {
-                    menu_left_list.down();
+                    if(menu_left_list.selected == -1){
+                        menu_tab_list.down();
+                    }else{
+                        menu_left_list.down();
+                    }
                 } else {
                     menu_right_list.down();
                 }
@@ -336,12 +378,18 @@ function App() {
                 if (menu_right_list.selected != -1 && !menu_right_list.left()) {
                     menu_right_list.unselect();
                     menu_left_list.select(menu_left_list.last_selected);
+                }else if(menu_left_list.selected != -1){
+                    menu_left_list.unselect();
                 }
                 break;
             case key.RIGHT:
                 if (menu_right_list.selected == -1) {
-                    menu_left_list.unselect();
-                    menu_right_list.select(menu_right_list.last_selected);
+                    if(menu_left_list.selected == -1){
+                        menu_left_list.select(menu_left_list.last_selected);
+                    }else{
+                        menu_left_list.unselect();
+                        menu_right_list.select(menu_right_list.last_selected);
+                    }
                 } else {
                     menu_right_list.right();
                 }
@@ -555,7 +603,35 @@ function App() {
 
         });
     }
+    this.listHistory = function (skip, append) {
+        skip = skip || 0;
+        return new Promise(function (resolve) {
+            cr.history(30, skip).then(function(history){
+                if (history.error && history.code == "bad_session") {
+                    cr = null;
+                    self.session(null);
+                    resolve([]);
+                    return;
+                }
+                var last_episodes = history.data.map(function (item) {
+                    return { episode: item.media, serie: item.series };
+                });
 
+                var title = (self.locale() == "ptBR" || self.locale() == "ptPT" ? "Histórico" : "History");
+                self.displayAnimes(title, last_episodes, append);
+                var titleSeries = (self.locale() == "ptBR" || self.locale() == "ptPT" ? "Últimos Animes" : "Last Animess");
+                
+                var last_series = {};
+                history.data.forEach(function(item){
+                    console.log(item.series);
+                    last_series[item.series.series_id] = item.series;
+                });
+                self.displaySeries(titleSeries, Object.values(last_series), append);
+                resolve(last_episodes);
+            });
+        });
+
+    }
     this.listLastUpdated = function (skip, append) {
         skip = skip || 0;
         return new Promise(function (resolve) {
@@ -574,6 +650,7 @@ function App() {
                         last_episodes = last_episodes.map(function (episode, index) {
                             return { episode: episode.data[0], serie: series.data[index] };
                         });
+                        
 
                         var title = (self.locale() == "ptBR" || self.locale() == "ptPT" ? "Últimos Animes" : "Last Updated");
                         self.displayAnimes(title, last_episodes, append);
@@ -745,7 +822,11 @@ function App() {
                //load start screen
                 menu_left_list.selected = -1;
                 menu_left_list.loadMore = function (offset) {
-                    return self.listLastUpdated(offset, true);
+                    if(menu_tab_list.selected === 0){
+                        return self.listLastUpdated(offset, true);
+                    }else{
+                        return self.listHistory(offset, true);
+                    }
                 }
                 Promise.all([self.listLastUpdated(), self.listPopular()]).then(function () {
                     resolve();
@@ -754,6 +835,7 @@ function App() {
         });
 
     }
+
 }
 
 var app = new App();

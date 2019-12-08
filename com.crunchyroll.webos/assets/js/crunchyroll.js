@@ -88,6 +88,38 @@ function Crunchyroll(token, device_type, device_id, locale) {
         });
     }
 
+    this.history = function(limit, offset){
+        return new Promise(function (resolve) {
+            start_session()
+                .then(function (session) {
+                    var formData = new FormData();
+                    formData.append("session_id", session.data.session_id);
+                    formData.append("limit", limit || 10);
+                    formData.append("offset", offset || 0);
+                    formData.append("locale", locale);
+                    formData.append("version", api_version);
+
+
+                    request("POST", api_uri_template + "recently_watched.0.json", formData)
+                        .then(function (series) {
+                            if (series.success) {
+                                series = JSON.parse(series.data);
+                                Promise.all(series.data.map(function(item){
+                                   return self.info(item.media.media_id).then(function(info){
+                                    item.media.duration = (info.data || {}).duration || 0;
+                                    item.media.playhead = (info.data || {}).playhead || 0;
+                                   });
+                                })).then(function(){
+                                    resolve(series);
+                                })
+                                
+                            } else {
+                                resolve(null);
+                            }
+                        });
+                });
+        });
+    }
     this.series = function (media_type, filter, limit, offset) {
         return new Promise(function (resolve) {
             start_session()
@@ -132,7 +164,7 @@ function Crunchyroll(token, device_type, device_id, locale) {
                         .then(function (episodes) {
                             if (episodes.success) {
                                 episodes = JSON.parse(episodes.data);
-
+                                console.log(episodes);
                                 if (episodes && episodes.data[0]) {
                                     self.info(episodes.data[0].media_id).then(function (info) {
                                         episodes.data[0].duration = (info.data || {}).duration || 0;
@@ -189,7 +221,8 @@ function Crunchyroll(token, device_type, device_id, locale) {
 
         var elapsed = 60;
         var elapsedDelta = 60;
-
+        //clear info cache
+        localStorage.removeItem("info_" + media_id);
         return new Promise(function (resolve) {
             start_session()
                 .then(function (session) {

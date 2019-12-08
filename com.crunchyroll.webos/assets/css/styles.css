@@ -62,17 +62,32 @@ html, body{
     border-style: dotted;
 }
 #menu{
+    display: flex;
     position: absolute;
     top: 0;
     left: 0;
     background: rgba(0,0,0, 0.7);
+}
+#menu #tabs{
+    color: white;
+    width: 60px;
+    text-align: center;
+    margin-top: 80px;
+    font-size: 30px;
+    
+}
+
+#menu #tabs div {
+    margin-bottom: 30px;
+}
+#menu #tabs div.selected{
+    color: orange;
 }
 #menu #episodes {
     display: inline-block;
     width: 30vw;
     overflow: hidden;
     height: 100vh;
-    float: left;
     border: 0;
     margin: 0;
     padding: 0;
@@ -137,18 +152,18 @@ html, body{
     font-weight: bold;
     display: block;
     margin: 5px;
+    font-size: 14px;
 }
 #menu #episodes .wrapper .thumb > div .episode{
     font-size: small;
 }
 #menu #episodes .wrapper .thumb > div .description{
     font-size: 10px;
-    display: none;
 }
 
 #menu #series {
     display: inline-block;
-    width: 70vw;
+    width: calc(70vw - 60px);
     overflow: hidden;
     height: 100vh;
     border: 0;
@@ -206,5 +221,8 @@ html, body{
     background-color: rgba(0,0,0,0.7);
     height: 40px;
     line-height: 40px;
+    font-size: 10px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
