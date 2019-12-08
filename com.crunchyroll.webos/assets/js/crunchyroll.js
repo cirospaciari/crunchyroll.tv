@@ -1,9 +1,9 @@
 //https://github.com/CloudMax94/crunchyroll-api/wiki/api
 function Crunchyroll(token, device_type, device_id, locale) {
     var api_uri_template = "https://api.crunchyroll.com/";
-    var api_version = "2.1.6";
+    var api_version = "0";//"2.1.6";
     var last_session = null;
-
+    var self = this;
     var request = function (method, url, data) {
         return new Promise(function (resolve) {
             var xhr = new XMLHttpRequest();
@@ -61,7 +61,7 @@ function Crunchyroll(token, device_type, device_id, locale) {
                             }
                             resolve(null);
                         });
-                });15,927.0
+                }); 15, 927.0
         });
 
     }
@@ -127,12 +127,21 @@ function Crunchyroll(token, device_type, device_id, locale) {
                     formData.append("locale", locale);
                     formData.append("version", api_version);
                     formData.append("sort", sort);
-                    
+
                     request("POST", api_uri_template + "list_media.0.json", formData)
                         .then(function (episodes) {
                             if (episodes.success) {
                                 episodes = JSON.parse(episodes.data);
-                                resolve(episodes);
+
+                                if (episodes && episodes.data[0]) {
+                                    self.info(episodes.data[0].media_id).then(function (info) {
+                                        episodes.data[0].duration = (info.data || {}).duration || 0;
+                                        episodes.data[0].playhead = (info.data || {}).playhead || 0;
+                                        resolve(episodes);
+                                    });
+                                } else {
+                                    resolve(episodes);
+                                }
                             } else {
                                 resolve(null);
                             }
@@ -141,10 +150,16 @@ function Crunchyroll(token, device_type, device_id, locale) {
         });
     }
 
-    this.info = function (media_id, fields) {
+    this.info = function (media_id, fields, forceCache) {
+        fields = fields || "media.stream_data,media.media_id,media.playhead,media.duration";
+        var cacheKey = "info_" + media_id;
+        var cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
         return new Promise(function (resolve) {
             start_session()
                 .then(function (session) {
+                    if (cached && cached.expires > new Date().getTime() && !forceCache) {
+                        return resolve(cached.value);
+                    }
                     var formData = new FormData();
                     formData.append("session_id", session.data.session_id);
                     formData.append("media_id", media_id);
@@ -152,11 +167,14 @@ function Crunchyroll(token, device_type, device_id, locale) {
                     formData.append("locale", locale);
                     formData.append("version", api_version);
 
-
                     request("POST", api_uri_template + "info.0.json", formData)
                         .then(function (infos) {
                             if (infos.success) {
                                 infos = JSON.parse(infos.data);
+                                localStorage.setItem(key, JSON.stringify({
+                                    expires: new Date().getTime() + (15 * 60 * 1000),
+                                    value: infos
+                                }));
                                 resolve(infos);
                             } else {
                                 resolve(null);
@@ -165,8 +183,38 @@ function Crunchyroll(token, device_type, device_id, locale) {
                 });
         });
     }
-    this.session = function(new_session){
-        if(arguments.length == 1){
+    this.playback_status = function (media_id, playhead) {
+        //https://github.com/CloudMax94/crunchyroll-api/wiki/RpcApiVideo_VideoView
+        //https://greasyfork.org/en/scripts/32366-crunchyroll-html5/code
+
+        var elapsed = 60;
+        var elapsedDelta = 60;
+
+        return new Promise(function (resolve) {
+            start_session()
+                .then(function (session) {
+                    
+                    var formData = new FormData();
+                    formData.append("session_id", session.data.session_id);
+                    formData.append("event", "playback_status");
+                    formData.append("media_id", media_id);
+                    formData.append("playhead", playhead);
+                    formData.append("elapsed", elapsed);
+                    formData.append("elapsedDelta", elapsedDelta);
+
+                    request("POST", api_uri_template + "log.0.json", formData)
+                        .then(function (infos) {
+                            if (infos.success) {
+                                resolve(infos);
+                            } else {
+                                resolve(null);
+                            }
+                        });
+                });
+        });
+    }
+    this.session = function (new_session) {
+        if (arguments.length == 1) {
             last_session = new_session;
         }
         return last_session;

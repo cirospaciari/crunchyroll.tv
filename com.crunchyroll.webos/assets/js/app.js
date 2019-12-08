@@ -5,6 +5,7 @@ var key = {
     OK: 13,
     FORWARD: 417,
     BACKWARD: 412,
+    BACK: 461,
     RIGHT: 39,
     LEFT: 37,
     UP: 38,
@@ -172,7 +173,7 @@ function App() {
                 index = 0;
             }
             var row = parseInt(index / 4);
-            if(index > (list.length-1)){
+            if (index > (list.length - 1)) {
                 index = list.length - 1;
             }
             if (list.length == 0) {
@@ -213,10 +214,14 @@ function App() {
     };
 
     var player = videojs('video');
+    player.ready(function(){
+        this.on('loadedmetadata', self.loadedmetadata );
+        this.on('timeupdate', self.timeupdate );
+
+    });
     player.hide();
 
     this.menuEvents = function (e) {
-
         if (e.keyCode == key.STOP) {
             //STOP
             player.pause();
@@ -269,7 +274,33 @@ function App() {
         } else if (e.keyCode == key.INFO) {
             //info
             this.menu(key.INFO);
+        } else if (e.keyCode == key.BACK) {
+            if (this.hasSomethingOpen) {
+                self.listLastUpdated();
+                this.hasSomethingOpen = false;
+            } else if (this.hasPlayedSomething) {
+
+                //double back button
+                if (self.lastKey == key.BACK && new Date().getTime() - this.lastKeyTime < 500) {
+                    clearTimeout(this.lastBack);
+                    webOS.platformBack();
+                       
+                }else{
+                    //delay back button action to enable double back feature
+                    this.lastBack = setTimeout(function () {
+                        if (menuIsShowing) {
+                            self.closeMenu();
+                        } else {
+                            self.openMenu();
+                        }
+                    }, 500);
+                }
+            } else {
+                webOS.platformBack();
+            }
         }
+        this.lastKey = e.keyCode;
+        this.lastKeyTime = new Date().getTime();
     }
 
     this.menu = function (keyCode) {
@@ -298,6 +329,7 @@ function App() {
                     menu_left_list.play();
                 } else {
                     menu_right_list.open();
+                    this.hasSomethingOpen = true;
                 }
                 break;
             case key.LEFT:
@@ -329,16 +361,39 @@ function App() {
         menu.classList.remove("hidden");
         menuIsShowing = true;
     }
+    this.timeupdate = function(){
+
+        if(!self.media_id)
+            return;
+        var now = new Date().getTime() / 1000;
+        if(!self.last_updated_time){
+            self.last_updated_time = now
+        }
+        if(now - self.last_updated_time >= 60){
+            cr.playback_status(self.media_id, player.currentTime());
+            self.last_updated_time = now
+        }
+    }
+    this.timeupdate = this.timeupdate.bind(true);
+    this.loadedmetadata = function(){
+        player.currentTime(self.start_time);
+    }
+    this.loadedmetadata = this.loadedmetadata.bind(true);
     this.play = function (media_id) {
         this.closeMenu();
- 
-        cr.info(media_id, "media.stream_data,media.media_id,media.playhead,media.duration")
+        cr.info(media_id, null, true)
             .then(function (episode_info) {
-                var uri = episode_info.data
+                var stream = episode_info.data
+                .stream_data
+                .streams[episode_info.data
                     .stream_data
-                    .streams[episode_info.data
-                        .stream_data
-                        .streams.length - 1].url;
+                    .streams.length - 1];
+                if(!stream){
+                    return self.logout();
+                }
+                var uri = stream.url;
+                
+                self.last_updated_time = 0;
 
                 player.show();
                 player.src({
@@ -346,8 +401,17 @@ function App() {
                     type: 'application/x-mpegURL',
                     withCredentials: true
                 });
+                var start_time = episode_info.data.playhead || 0;
+                var duration = episode_info.data.duration || 0;
+                if(start_time / duration > 0.85 || start_time < 30){
+                    start_time = 0;
+                }
+                self.media_id = media_id;
+                self.start_time = start_time;
+                
                 player.play();
-                player.currentTime(episode_info.playhead || 0);
+                self.hasPlayedSomething = true;
+                player.currentTime(start_time  || 0);
             });
     }
 
@@ -366,7 +430,11 @@ function App() {
                 //show login
                 if (splash.classList[0] != "with-login") {
                     splash.classList.add("with-login");
-                    login_email.focus();
+                    if(login_email.value && login_password.value){
+                        login_button.focus();
+                    }else{
+                        login_email.focus();
+                    }
                 }
             } else {
                 //hide splash and login
@@ -461,6 +529,7 @@ function App() {
                 }
 
                 localStorage.email = email;
+                localStorage.password = password;
                 login_email.style.borderColor = "initial";
                 login_email.style.borderStyle = "inset";
 
@@ -597,11 +666,17 @@ function App() {
             //TODO: AJUSTAR IMAGEM DE PLACE HOLDER
             var thumbImage = document.createElement("img");
             thumbImage.src = (anime.episode.screenshot_image || {}).full_url || "https://www.crunchyroll.com/i/coming_soon_beta_wide.jpg";
+            
+            var progressBar = document.createElement("div");
+            progressBar.classList.add("progress");
+            var progress = parseInt((anime.episode.playhead / anime.episode.duration) * 100);
+            progressBar.setAttribute("style", "width: " + progress + "%;");
 
             var leftWrapper = document.createElement("div");
             var rightWrapper = document.createElement("div");
 
             leftWrapper.appendChild(thumbImage);
+            leftWrapper.appendChild(progressBar);
 
             rightWrapper.appendChild(thumbText);
             rightWrapper.appendChild(thumbEpisode);
@@ -667,7 +742,7 @@ function App() {
                 }
 
             }).then(function () {
-                //load start screen
+               //load start screen
                 menu_left_list.selected = -1;
                 menu_left_list.loadMore = function (offset) {
                     return self.listLastUpdated(offset, true);
@@ -686,47 +761,47 @@ var app = new App();
 //set in cache locale
 login_locale.value = app.locale();
 login_email.value = localStorage.email || "";
-
+login_password.value = localStorage.password || "";
 //menu events    
 window.addEventListener("keydown", function (e) { return app.menuEvents(e); });
 
 //login events
 login_button.addEventListener("click", function () { return app.login(); });
-login_email.addEventListener("keydown", function (e) { 
-    if (e.keyCode == key.OK) { 
-        app.login(); 
-    }else if(e.keyCode == key.DOWN){
+login_email.addEventListener("keydown", function (e) {
+    if (e.keyCode == key.OK) {
+        app.login();
+    } else if (e.keyCode == key.DOWN) {
         login_password.focus();
-    } 
+    }
 });
 
 
-login_password.addEventListener("keydown", function (e) { 
-    if (e.keyCode == key.OK) { 
-        app.login(); 
-    }else if(e.keyCode == key.DOWN){
+login_password.addEventListener("keydown", function (e) {
+    if (e.keyCode == key.OK) {
+        app.login();
+    } else if (e.keyCode == key.DOWN) {
         login_locale.focus();
-    } else if(e.keyCode == key.UP){
+    } else if (e.keyCode == key.UP) {
         login_email.focus();
-    } 
+    }
 });
 
 
-login_locale.addEventListener("keydown", function (e) { 
-    if(e.keyCode == key.DOWN){
+login_locale.addEventListener("keydown", function (e) {
+    if (e.keyCode == key.DOWN) {
         e.preventDefault();
         login_button.focus();
-    } else if(e.keyCode == key.UP){
+    } else if (e.keyCode == key.UP) {
         e.preventDefault();
         login_password.focus();
-    } 
+    }
 });
-login_button.addEventListener("keydown",function (e) { 
-    if (e.keyCode == key.OK) { 
-        app.login(); 
-    }else if(e.keyCode == key.UP){
+login_button.addEventListener("keydown", function (e) {
+    if (e.keyCode == key.OK) {
+        app.login();
+    } else if (e.keyCode == key.UP) {
         login_locale.focus();
-    } 
+    }
 });
 
 //check login status
