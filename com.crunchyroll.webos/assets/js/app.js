@@ -427,10 +427,12 @@ function App() {
         player.currentTime(self.start_time);
     }
     this.loadedmetadata = this.loadedmetadata.bind(true);
-    this.play = function (media_id) {
+    this.play = function (episode) {
+        var media_id = episode.media_id;
         this.closeMenu();
         cr.info(media_id, null, true)
             .then(function (episode_info) {
+                
                 var stream = episode_info.data
                 .stream_data
                 .streams[episode_info.data
@@ -613,7 +615,7 @@ function App() {
                     resolve([]);
                     return;
                 }
-                var last_episodes = history.data.map(function (item) {
+                var last_episodes = (history.data || []).map(function (item) {
                     return { episode: item.media, serie: item.series };
                 });
 
@@ -623,7 +625,6 @@ function App() {
                 
                 var last_series = {};
                 history.data.forEach(function(item){
-                    console.log(item.series);
                     last_series[item.series.series_id] = item.series;
                 });
                 self.displaySeries(titleSeries, Object.values(last_series), append);
@@ -726,7 +727,7 @@ function App() {
             var thumb = document.createElement("a");
             thumb.classList.add("thumb");
 
-            thumb.setAttribute("href", "javascript:app.play('" + anime.episode.media_id + "')");
+            thumb.setAttribute("href", "javascript:app.play(" + JSON.stringify(anime.episode) + ")");
             thumb.setAttribute("data-media", anime.episode.media_id);
             var thumbText = document.createElement("span");
             thumbText.classList.add("title");
@@ -738,7 +739,8 @@ function App() {
 
             var thumbDescription = document.createElement("span");
             thumbDescription.classList.add("description");
-            thumbDescription.innerText = anime.episode.description;
+            anime.episode.description = anime.episode.description || "";
+            thumbDescription.innerText = anime.episode.description.slice(0, 100) + (anime.episode.description.length > 100 ? "..." : "");
 
             //TODO: AJUSTAR IMAGEM DE PLACE HOLDER
             var thumbImage = document.createElement("img");
@@ -835,7 +837,11 @@ function App() {
         });
 
     }
-
+    this.checkCaches = function(){
+        if(cr){
+            cr.checkCaches();
+        }
+    }
 }
 
 var app = new App();
@@ -887,4 +893,4 @@ login_button.addEventListener("keydown", function (e) {
 });
 
 //check login status
-setInterval(function () { app.checkLogin(); }, 1000);
+setInterval(function () { app.checkLogin(); app.checkCaches() }, 1000);

@@ -42,6 +42,8 @@ function Crunchyroll(token, device_type, device_id, locale) {
 
     }
     this.login = function (user, pass) {
+        this.cleanCaches();
+
         return new Promise(function (resolve) {
             start_session()
                 .then(function (session) {
@@ -88,10 +90,15 @@ function Crunchyroll(token, device_type, device_id, locale) {
         });
     }
 
-    this.history = function(limit, offset){
+    this.history = function (limit, offset) {
+        // var cacheKey = "cache_history_" + limit + "-" + offset;
+        // var cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
         return new Promise(function (resolve) {
             start_session()
                 .then(function (session) {
+                    // if (cached && cached.expires > new Date().getTime()) {
+                    //     return resolve(cached.value);
+                    // }
                     var formData = new FormData();
                     formData.append("session_id", session.data.session_id);
                     formData.append("limit", limit || 10);
@@ -104,15 +111,19 @@ function Crunchyroll(token, device_type, device_id, locale) {
                         .then(function (series) {
                             if (series.success) {
                                 series = JSON.parse(series.data);
-                                Promise.all(series.data.map(function(item){
-                                   return self.info(item.media.media_id).then(function(info){
-                                    item.media.duration = (info.data || {}).duration || 0;
-                                    item.media.playhead = (info.data || {}).playhead || 0;
-                                   });
-                                })).then(function(){
+                                Promise.all(series.data.map(function (item) {
+                                    return self.info(item.media.media_id).then(function (info) {
+                                        item.media.duration = (info.data || {}).duration || 0;
+                                        item.media.playhead = (info.data || {}).playhead || 0;
+                                    });
+                                })).then(function () {
+                                    // localStorage.setItem(cacheKey, JSON.stringify({
+                                    //     expires: new Date().getTime() + (60 * 1000),
+                                    //     value: series
+                                    // }));
                                     resolve(series);
                                 })
-                                
+
                             } else {
                                 resolve(null);
                             }
@@ -121,9 +132,14 @@ function Crunchyroll(token, device_type, device_id, locale) {
         });
     }
     this.series = function (media_type, filter, limit, offset) {
+        // var cacheKey = "cache_series_" + media_type + "-" + filter + "-" + offset + "-" + limit;
+        // var cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
         return new Promise(function (resolve) {
             start_session()
                 .then(function (session) {
+                    // if (cached && cached.expires > new Date().getTime()) {
+                    //     return resolve(cached.value);
+                    // }
                     var formData = new FormData();
                     formData.append("session_id", session.data.session_id);
                     formData.append("limit", limit || 10);
@@ -132,12 +148,21 @@ function Crunchyroll(token, device_type, device_id, locale) {
                     formData.append("filter", filter || "updated");
                     formData.append("locale", locale);
                     formData.append("version", api_version);
-
+                    formData.append("fields", ["series.series_id", "series.name", "series.in_queue",
+                        "series.description", "series.portrait_image", "series.landscape_image",
+                        "series.media_count", "series.publisher_name", "series.year", "series.rating",
+                        "series.url", "series.media_type", "series.genres", "image.wide_url",
+                        "image.fwide_url", "image.widestar_url", "image.fwidestar_url",
+                        "image.full_url", "series.etp_guid"]);
 
                     request("POST", api_uri_template + "list_series.0.json", formData)
                         .then(function (series) {
                             if (series.success) {
                                 series = JSON.parse(series.data);
+                                // localStorage.setItem(cacheKey, JSON.stringify({
+                                //     expires: new Date().getTime() + (10 * 60 * 1000),
+                                //     value: series
+                                // }));
                                 resolve(series);
                             } else {
                                 resolve(null);
@@ -146,11 +171,15 @@ function Crunchyroll(token, device_type, device_id, locale) {
                 });
         });
     }
-
     this.episode = function (series_id, limit, offset, sort) {
+        // var cacheKey = "cache_episode_" + series_id + "-" + limit + "-" + offset + "-" + sort;
+        // var cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
         return new Promise(function (resolve) {
             start_session()
                 .then(function (session) {
+                    // if (cached && cached.expires > new Date().getTime()) {
+                    //     return resolve(cached.value);
+                    // }
                     var formData = new FormData();
                     formData.append("session_id", session.data.session_id);
                     formData.append("limit", limit || 10);
@@ -164,16 +193,60 @@ function Crunchyroll(token, device_type, device_id, locale) {
                         .then(function (episodes) {
                             if (episodes.success) {
                                 episodes = JSON.parse(episodes.data);
-                                console.log(episodes);
-                                if (episodes && episodes.data[0]) {
-                                    self.info(episodes.data[0].media_id).then(function (info) {
-                                        episodes.data[0].duration = (info.data || {}).duration || 0;
-                                        episodes.data[0].playhead = (info.data || {}).playhead || 0;
-                                        resolve(episodes);
+
+
+                                Promise.all(episodes.data.map(function (item) {
+                                    return self.info(item.media_id);
+                                })).then(function (results) {
+                                    episodes.data = episodes.data.map(function (item, index) {
+                                        var info = results[index];
+                                        item.duration = (info.data || {}).duration || 0;
+                                        item.playhead = (info.data || {}).playhead || 0;
+                                        console.log(item.playhead, item.duration);
+                                        return item;
                                     });
-                                } else {
+                                    console.log(episodes);
+                                    // localStorage.setItem(cacheKey, JSON.stringify({
+                                    //     expires: new Date().getTime() + (60 * 1000),
+                                    //     value: episodes
+                                    // }));
                                     resolve(episodes);
-                                }
+                                })
+
+                            } else {
+                                resolve(null);
+                            }
+                        });
+                });
+        });
+    }
+
+    this.collection_info = function (collection_id, fields, forceCache) {
+        fields = fields || "media.stream_data,media.media_id,media.playhead,media.duration";
+        // var cacheKey = "cache_collection_info_" + collection_id;
+        // var cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
+        return new Promise(function (resolve) {
+            start_session()
+                .then(function (session) {
+                    // if (cached && cached.expires > new Date().getTime() && !forceCache) {
+                    //     return resolve(cached.value);
+                    // }
+                    var formData = new FormData();
+                    formData.append("session_id", session.data.session_id);
+                    formData.append("collection_id", collection_id);
+                    formData.append("fields", fields);
+                    formData.append("locale", locale);
+                    formData.append("version", api_version);
+
+                    request("POST", api_uri_template + "info.0.json", formData)
+                        .then(function (infos) {
+                            if (infos.success) {
+                                infos = JSON.parse(infos.data);
+                                // localStorage.setItem(cacheKey, JSON.stringify({
+                                //     expires: new Date().getTime() + (10 * 60 * 1000),
+                                //     value: infos
+                                // }));
+                                resolve(infos);
                             } else {
                                 resolve(null);
                             }
@@ -184,7 +257,7 @@ function Crunchyroll(token, device_type, device_id, locale) {
 
     this.info = function (media_id, fields, forceCache) {
         fields = fields || "media.stream_data,media.media_id,media.playhead,media.duration";
-        var cacheKey = "info_" + media_id;
+        var cacheKey = "cache_info_" + media_id;
         var cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
         return new Promise(function (resolve) {
             start_session()
@@ -203,8 +276,38 @@ function Crunchyroll(token, device_type, device_id, locale) {
                         .then(function (infos) {
                             if (infos.success) {
                                 infos = JSON.parse(infos.data);
-                                localStorage.setItem(key, JSON.stringify({
-                                    expires: new Date().getTime() + (15 * 60 * 1000),
+                                localStorage.setItem(cacheKey, JSON.stringify({
+                                    expires: new Date().getTime() + (10 * 60 * 1000),
+                                    value: infos
+                                }));
+                                resolve(infos);
+                            } else {
+                                resolve(null);
+                            }
+                        });
+                });
+        });
+    }
+
+    this.queue = function (media_types) {
+        var cacheKey = "cache_queue_" + media_types;
+        var cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
+        return new Promise(function (resolve) {
+            start_session()
+                .then(function (session) {
+                    if (cached && cached.expires > new Date().getTime()) {
+                        return resolve(cached.value);
+                    }
+                    var formData = new FormData();
+                    formData.append("session_id", session.data.session_id);
+                    formData.append("media_types", media_types);
+
+                    request("POST", api_uri_template + "queue.0.json", formData)
+                        .then(function (infos) {
+                            if (infos.success) {
+                                infos = JSON.parse(infos.data);
+                                localStorage.setItem(cacheKey, JSON.stringify({
+                                    expires: new Date().getTime() + (2 * 60 * 1000),
                                     value: infos
                                 }));
                                 resolve(infos);
@@ -222,11 +325,11 @@ function Crunchyroll(token, device_type, device_id, locale) {
         var elapsed = 60;
         var elapsedDelta = 60;
         //clear info cache
-        localStorage.removeItem("info_" + media_id);
+        localStorage.removeItem("cache_info_" + media_id);
         return new Promise(function (resolve) {
             start_session()
                 .then(function (session) {
-                    
+
                     var formData = new FormData();
                     formData.append("session_id", session.data.session_id);
                     formData.append("event", "playback_status");
@@ -251,6 +354,25 @@ function Crunchyroll(token, device_type, device_id, locale) {
             last_session = new_session;
         }
         return last_session;
+    }
+    this.checkCaches = function () {
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (key.indexOf("cache_") == 0) {
+                var cached = JSON.parse(localStorage.getItem(key) || "null");
+                if (cached.expires < new Date().getTime()) {
+                    localStorage.removeItem(key);
+                }
+            }
+        }
+    }
+    this.cleanCaches = function () {
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (key.indexOf("cache_") == 0) {
+                localStorage.removeItem(key);
+            }
+        }
     }
 }
 Crunchyroll.uuid = function () {

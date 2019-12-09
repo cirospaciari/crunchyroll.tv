@@ -202,7 +202,7 @@ html, body{
 #menu #episodes .wrapper .thumb .progress{
     position: absolute;
     bottom: 0px;
-    width: 100%;
+    width: 0%;
     height: 5px;
     background-color: orange;
     left: 0;
