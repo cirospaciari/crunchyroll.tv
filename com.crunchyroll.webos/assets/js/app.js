@@ -427,8 +427,7 @@ function App() {
         player.currentTime(self.start_time);
     }
     this.loadedmetadata = this.loadedmetadata.bind(true);
-    this.play = function (episode) {
-        var media_id = episode.media_id;
+    this.play = function (media_id) {
         this.closeMenu();
         cr.info(media_id, null, true)
             .then(function (episode_info) {
@@ -727,7 +726,7 @@ function App() {
             var thumb = document.createElement("a");
             thumb.classList.add("thumb");
 
-            thumb.setAttribute("href", "javascript:app.play(" + JSON.stringify(anime.episode) + ")");
+            thumb.setAttribute("href", "javascript:app.play('" + anime.episode.media_id + "')");
             thumb.setAttribute("data-media", anime.episode.media_id);
             var thumbText = document.createElement("span");
             thumbText.classList.add("title");
