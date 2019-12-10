@@ -309,10 +309,7 @@ function App() {
             //info
             this.menu(key.INFO);
         } else if (e.keyCode == key.BACK) {
-            if (this.hasSomethingOpen) {
-                self.listLastUpdated();
-                this.hasSomethingOpen = false;
-            } else if (this.hasPlayedSomething) {
+             if (this.hasPlayedSomething) {
 
                 //double back button
                 if (self.lastKey == key.BACK && new Date().getTime() - this.lastKeyTime < 500) {
@@ -371,7 +368,6 @@ function App() {
                     menu_left_list.play();
                 } else {
                     menu_right_list.open();
-                    this.hasSomethingOpen = true;
                 }
                 break;
             case key.LEFT:

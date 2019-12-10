@@ -91,14 +91,14 @@ function Crunchyroll(token, device_type, device_id, locale) {
     }
 
     this.history = function (limit, offset) {
-        // var cacheKey = "cache_history_" + limit + "-" + offset;
-        // var cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
+        var cacheKey = "cache_history_" + limit + "-" + offset;
+        var cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
         return new Promise(function (resolve) {
             start_session()
                 .then(function (session) {
-                    // if (cached && cached.expires > new Date().getTime()) {
-                    //     return resolve(cached.value);
-                    // }
+                    if (cached && cached.expires > new Date().getTime()) {
+                        return resolve(cached.value);
+                    }
                     var formData = new FormData();
                     formData.append("session_id", session.data.session_id);
                     formData.append("limit", limit || 10);
@@ -117,10 +117,10 @@ function Crunchyroll(token, device_type, device_id, locale) {
                                         item.media.playhead = (info.data || {}).playhead || 0;
                                     });
                                 })).then(function () {
-                                    // localStorage.setItem(cacheKey, JSON.stringify({
-                                    //     expires: new Date().getTime() + (60 * 1000),
-                                    //     value: series
-                                    // }));
+                                    localStorage.setItem(cacheKey, JSON.stringify({
+                                        expires: new Date().getTime() + (60 * 1000),
+                                        value: series
+                                    }));
                                     resolve(series);
                                 })
 
@@ -132,14 +132,14 @@ function Crunchyroll(token, device_type, device_id, locale) {
         });
     }
     this.series = function (media_type, filter, limit, offset) {
-        // var cacheKey = "cache_series_" + media_type + "-" + filter + "-" + offset + "-" + limit;
-        // var cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
+        var cacheKey = "cache_series_" + media_type + "-" + filter + "-" + offset + "-" + limit;
+        var cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
         return new Promise(function (resolve) {
             start_session()
                 .then(function (session) {
-                    // if (cached && cached.expires > new Date().getTime()) {
-                    //     return resolve(cached.value);
-                    // }
+                    if (cached && cached.expires > new Date().getTime()) {
+                        return resolve(cached.value);
+                    }
                     var formData = new FormData();
                     formData.append("session_id", session.data.session_id);
                     formData.append("limit", limit || 10);
@@ -159,10 +159,10 @@ function Crunchyroll(token, device_type, device_id, locale) {
                         .then(function (series) {
                             if (series.success) {
                                 series = JSON.parse(series.data);
-                                // localStorage.setItem(cacheKey, JSON.stringify({
-                                //     expires: new Date().getTime() + (10 * 60 * 1000),
-                                //     value: series
-                                // }));
+                                localStorage.setItem(cacheKey, JSON.stringify({
+                                    expires: new Date().getTime() + (10 * 60 * 1000),
+                                    value: series
+                                }));
                                 resolve(series);
                             } else {
                                 resolve(null);
@@ -172,14 +172,14 @@ function Crunchyroll(token, device_type, device_id, locale) {
         });
     }
     this.episode = function (series_id, limit, offset, sort) {
-        // var cacheKey = "cache_episode_" + series_id + "-" + limit + "-" + offset + "-" + sort;
-        // var cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
+        var cacheKey = "cache_episode_" + series_id + "-" + limit + "-" + offset + "-" + sort;
+        var cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
         return new Promise(function (resolve) {
             start_session()
                 .then(function (session) {
-                    // if (cached && cached.expires > new Date().getTime()) {
-                    //     return resolve(cached.value);
-                    // }
+                    if (cached && cached.expires > new Date().getTime()) {
+                        return resolve(cached.value);
+                    }
                     var formData = new FormData();
                     formData.append("session_id", session.data.session_id);
                     formData.append("limit", limit || 10);
@@ -205,11 +205,10 @@ function Crunchyroll(token, device_type, device_id, locale) {
                                         console.log(item.playhead, item.duration);
                                         return item;
                                     });
-                                    console.log(episodes);
-                                    // localStorage.setItem(cacheKey, JSON.stringify({
-                                    //     expires: new Date().getTime() + (60 * 1000),
-                                    //     value: episodes
-                                    // }));
+                                    localStorage.setItem(cacheKey, JSON.stringify({
+                                        expires: new Date().getTime() + (60 * 1000),
+                                        value: episodes
+                                    }));
                                     resolve(episodes);
                                 })
 
@@ -223,14 +222,14 @@ function Crunchyroll(token, device_type, device_id, locale) {
 
     this.collection_info = function (collection_id, fields, forceCache) {
         fields = fields || "media.stream_data,media.media_id,media.playhead,media.duration";
-        // var cacheKey = "cache_collection_info_" + collection_id;
-        // var cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
+        var cacheKey = "cache_collection_info_" + collection_id;
+        var cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
         return new Promise(function (resolve) {
             start_session()
                 .then(function (session) {
-                    // if (cached && cached.expires > new Date().getTime() && !forceCache) {
-                    //     return resolve(cached.value);
-                    // }
+                    if (cached && cached.expires > new Date().getTime() && !forceCache) {
+                        return resolve(cached.value);
+                    }
                     var formData = new FormData();
                     formData.append("session_id", session.data.session_id);
                     formData.append("collection_id", collection_id);
@@ -242,10 +241,10 @@ function Crunchyroll(token, device_type, device_id, locale) {
                         .then(function (infos) {
                             if (infos.success) {
                                 infos = JSON.parse(infos.data);
-                                // localStorage.setItem(cacheKey, JSON.stringify({
-                                //     expires: new Date().getTime() + (10 * 60 * 1000),
-                                //     value: infos
-                                // }));
+                                localStorage.setItem(cacheKey, JSON.stringify({
+                                    expires: new Date().getTime() + (10 * 60 * 1000),
+                                    value: infos
+                                }));
                                 resolve(infos);
                             } else {
                                 resolve(null);
