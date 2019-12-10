@@ -323,7 +323,7 @@ function App() {
                             self.closeMenu();
                         } else {
                             self.openMenu();
-                        }
+                        } 
                     }, 500);
                 }
             } else {
